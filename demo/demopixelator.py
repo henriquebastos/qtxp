@@ -59,7 +59,10 @@ class PixelDelegate(QAbstractItemDelegate):
         if option.state & QStyle.State_Selected:
             painter.fillRect(option.rect, option.palette.highlight())
 
-        size = min(option.rect.width(), option.rect.height())
+        r = option.rect
+        x, y, w, h = r.x(), r.y(), r.width(), r.height()
+
+        size = min(w, h)
         brightness = index.model().data(index, Qt.DisplayRole)
         radius = (size / 2.0) - (brightness / 255.0 * size / 2.0)
         if radius == 0.0:
@@ -74,9 +77,7 @@ class PixelDelegate(QAbstractItemDelegate):
         else:
             painter.setBrush(option.palette.text())
 
-        painter.drawEllipse(QRectF(option.rect.x() + option.rect.width() / 2 - radius,
-                                   option.rect.y() + option.rect.height() / 2 - radius,
-                                   2 * radius, 2 * radius))
+        painter.drawEllipse(QRectF(x + w / 2 - radius, y + h / 2.0 - radius, 2 * radius, 2 * radius))
 
         painter.restore()
 
