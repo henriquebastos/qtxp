@@ -1,7 +1,6 @@
 import sys
 
 from PyQt5.QtCore import QAbstractTableModel
-from PyQt5.QtCore import QCoreApplication
 from PyQt5.QtCore import QDir
 from PyQt5.QtCore import QModelIndex
 from PyQt5.QtCore import QRectF
@@ -9,23 +8,18 @@ from PyQt5.QtCore import QSize
 from PyQt5.QtCore import QVariant
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QImage
-from PyQt5.QtGui import QKeySequence
 from PyQt5.QtGui import QPainter
 from PyQt5.QtGui import qGray
 from PyQt5.QtWidgets import QAbstractItemDelegate
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QFileDialog
-from PyQt5.QtWidgets import QHBoxLayout
-from PyQt5.QtWidgets import QLabel
 from PyQt5.QtWidgets import QMainWindow
-from PyQt5.QtWidgets import QMenu
 from PyQt5.QtWidgets import QMessageBox
-from PyQt5.QtWidgets import QSpinBox
 from PyQt5.QtWidgets import QStyle
 from PyQt5.QtWidgets import QStyleOptionViewItem
-from PyQt5.QtWidgets import QTableView
-from PyQt5.QtWidgets import QVBoxLayout
-from PyQt5.QtWidgets import QWidget
+from PyQt5.uic import loadUiType
+
+Ui_MainWindow, _ = loadUiType('demopixelator.ui')
 
 
 class ImageModel(QAbstractTableModel):
@@ -93,98 +87,55 @@ class PixelDelegate(QAbstractItemDelegate):
         self.pixelSize = size
 
 
-class MainWindow(QMainWindow):
+class MainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
-        super().__init__(parent)
+        super().__init__()
+
+        self.setupUi(self)
 
         self.currentPath = QDir.currentPath()
         self.model = ImageModel(self)
 
-        centralWidget = QWidget()
-
-        self.view = QTableView()
-        self.view.setShowGrid(False)
-        self.view.horizontalHeader().hide()
-        self.view.verticalHeader().hide()
-        self.view.horizontalHeader().setMinimumSectionSize(1)
-        self.view.verticalHeader().setMinimumSectionSize(1)
         self.view.setModel(self.model)
 
-        delegate = PixelDelegate(self)
-        self.view.setItemDelegate(delegate)
+        self.delegate = PixelDelegate(self)
+        self.view.setItemDelegate(self.delegate)
 
-        pixelSizeLabel = QLabel("Pixel size:")
-        pixelSizeSpinBox = QSpinBox()
-        pixelSizeSpinBox.setMinimum(4)
-        pixelSizeSpinBox.setMaximum(32)
-        pixelSizeSpinBox.setValue(12)
-
-        fileMenu = QMenu("&File", self)
-        openAction = fileMenu.addAction("&Open...")
-        openAction.setShortcuts(QKeySequence.Open)
-
-        self.printAction = fileMenu.addAction('&Print...')
-        self.printAction.setEnabled(False)
-        self.printAction.setShortcuts(QKeySequence.Print)
-
-        quitAction = fileMenu.addAction('E&xit')
-        quitAction.setShortcuts(QKeySequence.Quit)
-
-        helpMenu = QMenu('&Help', self)
-        aboutAction = helpMenu.addAction('&About')
-
-        self.menuBar().setNativeMenuBar(False)
-        self.menuBar().addMenu(fileMenu)
-        self.menuBar().addSeparator()
-        self.menuBar().addMenu(helpMenu)
-
-        openAction.triggered.connect(self.chooseImage)
-        self.printAction.triggered.connect(self.printImage)
-        quitAction.triggered.connect(QCoreApplication.quit)
-        aboutAction.triggered.connect(self.showAboutBox)
-        pixelSizeSpinBox.valueChanged.connect(delegate.setPixelSize)
-        pixelSizeSpinBox.valueChanged.connect(self.updateView)
-
-        controlsLayout = QHBoxLayout()
-        controlsLayout.addWidget(pixelSizeLabel)
-        controlsLayout.addWidget(pixelSizeSpinBox)
-        controlsLayout.addStretch(1)
-
-        mainLayout = QVBoxLayout()
-        mainLayout.addWidget(self.view)
-        mainLayout.addLayout(controlsLayout)
-        centralWidget.setLayout(mainLayout)
-
-        self.setCentralWidget(centralWidget)
-
-        self.setWindowTitle('Pixalator')
-        self.resize(640, 480)
-
-    def openImage(self, fileName):
+    def open_image(self, filename):
         image = QImage()
 
-        if image.load(fileName):
-            self.model.setImage(image)
-            if not fileName.startswith(':/'):
-                self.currentPath = fileName
-                self.setWindowTitle('%s - Pixelator' % fileName)
+        if not image.load(filename):
+            return
+
+        self.model.setImage(image)
+        self.currentPath = filename
+        self.setWindowTitle('{} - Pixelator'.format(filename))
 
         self.updateView()
 
-    def chooseImage(self):
-        fileName, _ = QFileDialog(self).getOpenFileName(self, 'Choose an image', self.currentPath, '*')
-        print(fileName)
-        if fileName:
-            self.openImage(fileName)
+    def choose_image(self):
+        dialog = QFileDialog(self)
+        filename, _ = dialog.getOpenFileName(self, 'Choose an image', self.currentPath, '*')
 
-    def printImage(self):
+        if not filename:
+            return
+
+        self.open_image(filename)
+
+    def print_image(self):
         pass
 
-    def showAboutBox(self):
-        QMessageBox().about(self, 'About the Pixelator example',
-                            'This example demonstrates how a standard view and a custom\n'
-                            'delegate can be used to produce a specialized representation\n'
-                            'of data in a simple custom model.')
+    def show_about(self):
+        title = 'About the Pixelator example'
+        text = ('This example demonstrates how a standard view and a custom\n'
+                'delegate can be used to produce a specialized representation\n'
+                'of data in a simple custom model.')
+
+        QMessageBox().about(self, title, text)
+
+    def change_pixel_size(self, size):
+        self.delegate.setPixelSize(size)
+        self.updateView()
 
     def updateView(self):
         self.view.resizeColumnsToContents()
