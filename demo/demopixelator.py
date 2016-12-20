@@ -144,6 +144,8 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+    app.setAttribute(Qt.AA_DontUseNativeMenuBar)
+
     window = MainWindow()
     window.show()
     app.exec()
