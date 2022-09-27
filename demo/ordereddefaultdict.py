@@ -36,8 +36,4 @@ class DefaultOrderedDict(OrderedDict):
                           copy.deepcopy(self.items()))
 
     def __repr__(self):
-        return '%s(%s, %s)' % (
-            type(self).__name__,
-            self.default_factory,
-            super().__repr__(self)
-        )
+        return f'{type(self).__name__}({self.default_factory}, {super().__repr__(self)})'

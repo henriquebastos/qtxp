@@ -45,9 +45,7 @@ class ImageModel(QAbstractTableModel):
         return qGray(self.modelImage.pixel(index.column(), index.row()))
 
     def headerData(self, section, orientation, role=None):
-        if role == Qt.SizeHintRole:
-            return QSize(1, 1)
-        return QVariant
+        return QSize(1, 1) if role == Qt.SizeHintRole else QVariant
 
 
 class PixelDelegate(QAbstractItemDelegate):
@@ -110,7 +108,7 @@ class MainWindow(QMainWindow, Ui_MainWindow):
 
         self.model.setImage(image)
         self.currentPath = filename
-        self.setWindowTitle('{} - Pixelator'.format(filename))
+        self.setWindowTitle(f'{filename} - Pixelator')
 
         self.updateView()
 
